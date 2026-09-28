@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 12 — Jasmine</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bleu:#D6E4F7;--rose:#F5E4E4;--navy:#1A3A5C;--wine:#7B2D3E;
+  --gold:#C4922A;--vert:#2D6A4F;--paris:#3D5A8A;--text:#1E1E2E;
+  --muted:#6B7280;--light:#F8F6F2;--cream:#FDFAF5;--purple:#6B3FA0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#F0EDE8;color:var(--text);height:100vh;overflow:hidden;}
+.slides-wrapper{width:100vw;height:100vh;position:relative;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s ease;transform:translateX(40px);overflow:hidden;}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.out{opacity:0;transform:translateX(-40px);}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 38px 10px;background:#fff;border-bottom:1px solid rgba(0,0,0,.07);flex-shrink:0;}
+.logo-mark{width:33px;height:33px;border-radius:50%;background:linear-gradient(135deg,var(--bleu),var(--rose));display:flex;align-items:center;justify-content:center;font-size:14px;}
+.logo-text{font-size:12px;font-weight:600;color:var(--navy);letter-spacing:.04em;text-transform:uppercase;}
+.logo-sub{font-size:10px;color:var(--muted);}
+.topbar-logo{display:flex;align-items:center;gap:9px;}
+.session-badge{background:var(--purple);color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;}
+.date-text{font-size:11px;color:var(--muted);margin-top:3px;text-align:right;}
+.content{flex:1;overflow-y:auto;padding:24px 46px;display:flex;flex-direction:column;}
+.content::-webkit-scrollbar{width:4px;}.content::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:4px;}
+.slide-eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.slide-title{font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,38px);font-weight:700;line-height:1.15;color:var(--navy);margin-bottom:5px;}
+.slide-title em{color:var(--purple);font-style:italic;}
+.slide-subtitle{font-size:14px;color:var(--muted);margin-bottom:20px;}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;padding:11px 38px;background:#fff;border-top:1px solid rgba(0,0,0,.07);flex-shrink:0;}
+.nav-btn{display:flex;align-items:center;gap:7px;background:none;border:1.5px solid var(--navy);color:var(--navy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:8px 20px;border-radius:50px;cursor:pointer;transition:all .2s;}
+.nav-btn:hover{background:var(--navy);color:#fff;}
+.nav-btn:disabled{opacity:.3;cursor:default;}
+.nav-btn:disabled:hover{background:none;color:var(--navy);}
+.progress-dots{display:flex;gap:6px;align-items:center;}
+.dot{width:7px;height:7px;border-radius:50%;background:#D1D5DB;transition:all .3s;cursor:pointer;}
+.dot.active{background:var(--purple);width:22px;border-radius:4px;}
+.dot.done{background:var(--vert);}
+.intro-flag{display:flex;width:48px;height:32px;border-radius:5px;overflow:hidden;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.flag-b{flex:1;background:var(--bleu);}.flag-w{flex:1;background:#fff;}.flag-r{flex:1;background:var(--rose);}
+.intro-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
+.chip{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:50px;font-size:12px;font-weight:500;border:1.5px solid;}
+.chip-blue{background:#EFF6FF;color:var(--navy);border-color:var(--bleu);}
+.chip-wine{background:#FDF2F4;color:var(--wine);border-color:#F0C4CC;}
+.chip-gold{background:#FFFBEB;color:var(--gold);border-color:#FDE68A;}
+.chip-green{background:#ECFDF5;color:var(--vert);border-color:#A7F3D0;}
+.chip-purple{background:#F3F0FF;color:var(--purple);border-color:#D4C4F0;}
+.immersive-box{background:linear-gradient(135deg,#1A3A5C 0%,#6B3FA0 100%);border-radius:20px;padding:26px 32px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+.immersive-scene{font-family:'Playfair Display',serif;font-size:18px;font-style:italic;line-height:1.6;color:rgba(255,255,255,.92);margin-bottom:6px;}
+.immersive-en{font-size:13px;color:rgba(255,255,255,.52);font-style:italic;margin-bottom:12px;line-height:1.5;}
+.immersive-tip{font-size:13px;color:rgba(255,255,255,.68);border-top:1px solid rgba(255,255,255,.15);padding-top:11px;}
+/* VRAI FAUX */
+.vf-grid{display:flex;flex-direction:column;gap:8px;}
+.vf-card{background:#fff;border:2px solid #E5E7EB;border-radius:13px;overflow:hidden;}
+.vf-question{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+.vf-fr{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy);}
+.vf-btns{display:flex;gap:7px;flex-shrink:0;margin-left:12px;}
+.vf-btn{padding:6px 13px;border-radius:20px;border:1.5px solid;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;}
+.vf-btn-v{border-color:#22C55E;color:#166534;background:#DCFCE7;}
+.vf-btn-v:hover{background:#22C55E;color:#fff;}
+.vf-btn-f{border-color:#EF4444;color:#991B1B;background:#FEE2E2;}
+.vf-btn-f:hover{background:#EF4444;color:#fff;}
+.vf-reveal{display:none;padding:8px 16px 12px;border-top:1px dashed #E5E7EB;}
+.vf-reveal.open{display:block;animation:fadeIn .3s ease;}
+.vf-correct{font-size:13px;font-weight:600;color:var(--vert);}
+.vf-wrong{font-size:13px;font-weight:600;color:var(--wine);}
+.vf-expl{font-size:12px;color:var(--muted);margin-top:3px;}
+.vf-card.answered-correct{border-color:#22C55E;background:#F0FDF4;}
+.vf-card.answered-wrong{border-color:#EF4444;background:#FFF5F5;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popUp{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* ══ PASSE COMPOSE RECAP SLIDE ══ */
+.pc-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+.pc-left{display:flex;flex-direction:column;gap:14px;}
+.pc-card{border-radius:16px;padding:18px 20px;border:2px solid;}
+.pc-card-avoir{background:#EFF6FF;border-color:#BFDBFE;}
+.pc-card-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-bottom:12px;}
+.avoir-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.avoir-main{display:flex;flex-direction:column;gap:4px;}
+.avoir-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(26,58,92,.08);}
+.avoir-row:last-child{border-bottom:none;}
+.avoir-pronoun{font-size:14px;font-weight:600;color:var(--navy);min-width:40px;}
+.avoir-conj{font-size:16px;font-weight:700;color:#1D4ED8;}
+.avoir-secondary{border-left:1px solid rgba(26,58,92,.1);padding-left:12px;display:flex;flex-direction:column;gap:4px;}
+.avoir-sec-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed rgba(26,58,92,.06);}
+.avoir-sec-row:last-child{border-bottom:none;}
+.avoir-sec-pronoun{font-size:12px;color:var(--muted);min-width:60px;}
+.avoir-sec-conj{font-size:13px;font-weight:500;color:#6B97C7;}
+.pp-card{background:#F3F0FF;border-color:#D4C4F0;border-radius:14px;padding:16px 18px;}
+.pp-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-bottom:10px;}
+.pp-rows{display:flex;flex-direction:column;gap:6px;}
+.pp-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.7);}
+.pp-ending{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--purple);min-width:36px;text-align:center;}
+.pp-label{font-size:12px;color:var(--muted);}
+.pp-examples{font-size:13px;color:var(--navy);font-weight:500;}
+.pc-right{display:flex;flex-direction:column;gap:14px;}
+.exceptions-card{background:#FDF2F4;border:2px solid #F0C4CC;border-radius:14px;padding:16px 18px;}
+.exc-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--wine);margin-bottom:10px;}
+.exc-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #F0C4CC;}
+.exc-item:last-child{border-bottom:none;}
+.exc-tag{background:var(--wine);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0;margin-top:2px;}
+.exc-content{flex:1;}
+.exc-verb{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--wine);}
+.exc-example{font-size:13px;color:var(--navy);margin-top:3px;font-weight:500;}
+.exc-en{font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;}
+.english-times-card{background:linear-gradient(135deg,#1A3A5C,#6B3FA0);border-radius:14px;padding:16px 18px;color:#fff;}
+.et-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
+.et-intro{font-size:13px;color:rgba(255,255,255,.8);margin-bottom:10px;line-height:1.5;}
+.et-examples{display:flex;flex-direction:column;gap:5px;}
+.et-row{display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,.08);border-radius:8px;}
+.et-en{font-size:12px;color:rgba(255,255,255,.65);flex:1;}
+.et-fr{font-size:13px;font-weight:700;color:#FDE68A;}
+.et-arrow{color:rgba(255,255,255,.3);font-size:12px;}
+.pc-formula-bar{background:var(--navy);border-radius:12px;padding:14px 18px;text-align:center;color:#fff;font-size:15px;}
+.pc-formula-bar strong{color:#FDE68A;}
+.pc-formula-bar em{color:rgba(255,255,255,.6);font-style:normal;font-size:12px;}
+
+/* VERBES */
+.verbes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px;}
+.verbe-card{background:#fff;border:2px solid #E5E7EB;border-radius:13px;padding:12px;cursor:pointer;transition:all .22s;text-align:center;}
+.verbe-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 6px 18px rgba(107,63,160,.12);}
+.verbe-card.active-verbe{border-color:var(--purple);background:#F3F0FF;}
+.verbe-emoji{font-size:22px;margin-bottom:4px;}
+.verbe-infinitif{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy);}
+.verbe-pp{font-size:11px;color:var(--purple);font-weight:600;margin-top:2px;}
+.verbe-en{font-size:10px;color:var(--muted);margin-top:2px;}
+.verbe-panel{background:#fff;border:1.5px solid var(--purple);border-radius:13px;padding:16px 18px;display:none;animation:popUp .3s ease;}
+.verbe-panel.open{display:block;}
+.vp-header{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.vp-icon{font-size:20px;}
+.vp-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--purple);}
+.vp-subtitle{font-size:11px;color:var(--muted);}
+.vp-examples{display:flex;flex-direction:column;gap:7px;}
+.vp-ex{background:#F3F0FF;border-radius:9px;padding:9px 12px;}
+.vp-fr{font-size:14px;font-weight:600;color:var(--navy);}
+.vp-en{font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;}
+.vp-try{font-size:13px;color:var(--purple);font-weight:600;margin-top:9px;padding:9px 12px;background:#F3F0FF;border-radius:9px;border:1.5px dashed #D4C4F0;}
+
+/* EMOTIONS — anglais devant */
+.emotions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px;}
+.emotion-card{border:1.5px solid #E5E7EB;border-radius:13px;padding:13px 15px;cursor:pointer;transition:all .2s;background:#fff;}
+.emotion-card:hover{border-color:var(--wine);transform:translateY(-2px);box-shadow:0 6px 16px rgba(123,45,62,.1);}
+.emotion-card.flipped{background:var(--wine);border-color:var(--wine);}
+.emotion-front,.emotion-back{transition:all .15s;}
+.emotion-card.flipped .emotion-front{display:none;}
+.emotion-card.flipped .emotion-back{display:block;}
+.emotion-back{display:none;}
+.em-emoji{font-size:22px;margin-bottom:5px;}
+.em-en-main{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--navy);}
+.em-hint{font-size:9px;color:var(--muted);margin-top:4px;}
+.em-fr-back{font-size:16px;font-weight:700;color:#fff;margin-bottom:3px;}
+.em-en-small{font-size:10px;color:rgba(255,255,255,.6);font-style:italic;margin-bottom:4px;}
+.em-exemple{font-size:11px;color:rgba(255,255,255,.82);font-style:italic;}
+
+/* JEU DE ROLE */
+.roleplay-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.roleplay-questions{display:flex;flex-direction:column;gap:8px;}
+.rq-card{background:#fff;border:1.5px solid #E5E7EB;border-radius:12px;padding:11px 14px;display:flex;align-items:flex-start;gap:10px;}
+.rq-avatar{width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.rq-label{font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.rq-fr{font-size:14px;font-weight:600;color:var(--navy);}
+.rq-en{font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;}
+.rq-note{font-size:10px;color:var(--purple);margin-top:3px;font-style:italic;}
+.roleplay-aide{background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:15px 17px;height:fit-content;}
+.aide-title{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;}
+.aide-section{margin-bottom:11px;}
+.aide-section-title{font-size:10px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+.aide-item{font-size:13px;color:var(--text);padding:3px 0;}
+.aide-item strong{color:var(--purple);}
+.aide-item span{color:var(--muted);font-size:11px;font-style:italic;}
+.roleplay-tip{background:#F3F0FF;border:1px solid #D4C4F0;border-radius:9px;padding:9px 13px;margin-top:9px;font-size:12px;color:var(--purple);}
+
+/* ARTICLES */
+.articles-intro{background:linear-gradient(135deg,#1A3A5C,#6B3FA0);border-radius:14px;padding:16px 20px;color:#fff;margin-bottom:14px;text-align:center;}
+.articles-intro-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:3px;}
+.articles-intro-sub{font-size:12px;color:rgba(255,255,255,.65);}
+.articles-museum{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:12px;}
+.art-card{border-radius:13px;border:2px solid;cursor:pointer;transition:all .22s;overflow:hidden;}
+.art-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12);}
+.art-card.open-art{transform:translateY(-3px);}
+.art-card-top{padding:13px 9px;text-align:center;}
+.art-main{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.2;}
+.art-en{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;}
+.art-panel{display:none;padding:11px;border-top:1.5px solid rgba(0,0,0,.08);}
+.art-panel.open-panel{display:block;animation:fadeIn .3s ease;}
+.art-rule{font-size:11px;font-weight:600;margin-bottom:6px;}
+.art-examples{display:flex;flex-direction:column;gap:4px;}
+.art-ex{font-size:11px;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.04);}
+.art-ex strong{font-weight:700;}.art-ex span{font-style:italic;opacity:.7;}
+.art-1{border-color:#3B82F6;}.art-1 .art-card-top{background:#EFF6FF;}.art-1 .art-main{color:#1D4ED8;}.art-1 .art-en{color:#3B82F6;}.art-1 .art-rule{color:#1D4ED8;}
+.art-2{border-color:#16A34A;}.art-2 .art-card-top{background:#F0FDF4;}.art-2 .art-main{color:#166534;}.art-2 .art-en{color:#16A34A;}.art-2 .art-rule{color:#166534;}
+.art-3{border-color:#EA580C;}.art-3 .art-card-top{background:#FFF7ED;}.art-3 .art-main{color:#C2410C;}.art-3 .art-en{color:#EA580C;}.art-3 .art-rule{color:#C2410C;}
+.art-4{border-color:#9333EA;}.art-4 .art-card-top{background:#FAF5FF;}.art-4 .art-main{color:#7E22CE;}.art-4 .art-en{color:#9333EA;}.art-4 .art-rule{color:#7E22CE;}
+.art-5{border-color:#6B7280;}.art-5 .art-card-top{background:#F9FAFB;}.art-5 .art-main{color:#374151;}.art-5 .art-en{color:#6B7280;}.art-5 .art-rule{color:#374151;}
+.art6-section{background:#FFFBEB;border:2px solid var(--gold);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.art6-title{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;}
+.art6-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
+.art6-col{text-align:center;}
+.art6-word{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);}
+.art6-type{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 7px;}
+.art6-ex{font-size:11px;color:var(--text);text-align:left;padding:3px 0;border-bottom:1px dashed #FDE68A;}
+.art6-ex:last-child{border-bottom:none;}
+.art6-ex strong{color:#A3692A;}.art6-ex em{color:var(--muted);font-size:10px;}
+.art6-rule{background:linear-gradient(90deg,#FDE68A,#FEF9C3);border-radius:9px;padding:9px 13px;font-size:12px;font-weight:600;color:#A3692A;text-align:center;}
+.tip-bar{display:flex;align-items:center;justify-content:center;gap:20px;background:#1A3A5C;border-radius:11px;padding:11px 16px;}
+.tip-item{font-size:13px;font-weight:600;color:#fff;text-align:center;}
+.tip-item span{color:#FDE68A;}
+.tip-sep{width:1px;height:28px;background:rgba(255,255,255,.2);}
+/* TU LE SAVAIS */
+.tls-card{background:linear-gradient(135deg,#1A3A5C,#6B3FA0);border-radius:18px;padding:22px 26px;color:#fff;margin-bottom:13px;}
+.tls-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px;}
+.tls-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:9px;line-height:1.3;}
+.tls-body{font-size:14px;line-height:1.75;color:rgba(255,255,255,.88);}
+.code-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.code-card{background:var(--light);border-radius:11px;padding:12px 14px;border:1.5px solid #E5E7EB;}
+.code-icon{font-size:18px;margin-bottom:4px;}
+.code-title{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:3px;}
+.code-text{font-size:12px;color:var(--muted);line-height:1.6;}
+.code-text strong{color:var(--text);}
+/* FINAL */
+.final-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.song-card{background:var(--navy);color:#fff;border-radius:14px;padding:19px;position:relative;overflow:hidden;}
+.song-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px;}
+.song-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:3px;}
+.song-artist{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:10px;}
+.song-why{font-size:12px;color:rgba(255,255,255,.78);line-height:1.6;border-top:1px solid rgba(255,255,255,.12);padding-top:9px;}
+.song-link{display:inline-flex;align-items:center;gap:6px;margin-top:9px;background:rgba(255,255,255,.12);color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:6px 12px;border-radius:30px;transition:background .2s;}
+.song-link:hover{background:rgba(255,255,255,.22);}
+.challenge-card{background:#fff;border:2px solid var(--purple);border-radius:14px;padding:19px;}
+.challenge-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;}
+.challenge-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:9px;}
+.ch-items{list-style:none;}
+.ch-items li{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text);padding:5px 0;border-bottom:1px dashed #D4C4F0;}
+.ch-items li:last-child{border-bottom:none;}
+.ch-dot{width:19px;height:19px;border-radius:50%;background:var(--purple);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.bravo-bar{grid-column:1/-1;background:linear-gradient(135deg,var(--vert),#1D4D38);border-radius:11px;padding:12px 18px;display:flex;align-items:center;gap:12px;color:#fff;}
+.bravo-icon{font-size:22px;}
+.bravo-text{font-size:13px;line-height:1.6;}
+.bravo-text strong{font-size:14px;}
+</style>
+</head>
+<body>
+<div class="slides-wrapper">
+
+<!-- S1 INTRO -->
+<div class="slide active" id="s1">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#10022;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt1"></div></div></div>
+  <div class="content">
+    <div class="intro-flag"><div class="flag-b"></div><div class="flag-w"></div><div class="flag-r"></div></div>
+    <div class="slide-eyebrow">Tu es rentrée. Ton ami français te pose des questions&hellip;</div>
+    <div class="slide-title">Parler de ton voyage &#8212;<br><em>passé et impressions</em></div>
+    <div class="slide-subtitle">Révision &middot; Passé composé &middot; Émotions &middot; Jeu de rôle &middot; Les articles</div>
+    <div class="immersive-box">
+      <div class="immersive-scene">"Alors Jasmine&hellip; Paris, c&#39;était comment ? T&#39;as fait quoi ? T&#39;as mangé quoi ? Dis-moi tout !"</div>
+      <div class="immersive-en">"So Jasmine&hellip; Paris, how was it? What did you do? What did you eat? Tell me everything!"</div>
+      <div class="immersive-tip">&#127919; Objectif aujourd&#39;hui : <strong style="color:#fff;">raconter avec fluidité.</strong> Pas besoin d&#39;être parfaite &#8212; l&#39;important c&#39;est de parler ! <em style="color:rgba(255,255,255,.45)">(Fluency first, perfection later!)</em></div>
+    </div>
+    <div class="intro-chips">
+      <div class="chip chip-blue">&#128260; Révision S11</div>
+      <div class="chip chip-purple">&#128172; Passé composé</div>
+      <div class="chip chip-wine">&#128525; C&#39;était comment ?</div>
+      <div class="chip chip-gold">&#127914; Jeu de rôle</div>
+      <div class="chip chip-green">&#128218; Les 5 articles</div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" disabled>&#8592; Retour</button><div class="progress-dots" id="dots1"></div><button class="nav-btn" onclick="goTo(1)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S2 VRAI/FAUX -->
+<div class="slide" id="s2">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#10022;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt2"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Ton échauffement &bull; 4 minutes</div>
+    <div class="slide-title">Vrai <em>ou Faux ?</em></div>
+    <div class="slide-subtitle">Lis à voix haute, puis clique ! <span style="font-size:13px;color:#9CA3AF">(Read aloud, then click)</span></div>
+    <div class="vf-grid" id="vf-grid"></div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(0)">&#8592; Retour</button><div class="progress-dots" id="dots2"></div><button class="nav-btn" onclick="goTo(2)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S3 PASSE COMPOSE RECAP -->
+<div class="slide" id="s3">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#128218;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt3"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Rappel essentiel &bull; 4 minutes</div>
+    <div class="slide-title">Le passé composé &#8212; <em>la formule !</em></div>
+    <div class="slide-subtitle">La clé pour parler de tout ce que tu as fait en France &#127467;&#127479;</div>
+    <div class="pc-formula-bar" style="margin-bottom:16px;">
+      <strong>AVOIR</strong> au présent &nbsp;+&nbsp; <strong>Participe Passé</strong> &nbsp;=&nbsp; <strong style="color:#A7F3D0;">Passé Composé</strong>
+      &nbsp;&nbsp;<em>( j&#39;ai mang&#233; / j&#39;ai bu / j&#39;ai visit&#233;&hellip; )</em>
+    </div>
+    <div class="pc-layout">
+      <div class="pc-left">
+        <div class="pc-card pc-card-avoir">
+          <div class="pc-card-title">&#128722; AVOIR au présent</div>
+          <div class="avoir-grid">
+            <div class="avoir-main">
+              <div class="avoir-row"><span class="avoir-pronoun">Je</span><span class="avoir-conj">j&#39;ai</span></div>
+              <div class="avoir-row"><span class="avoir-pronoun">Tu</span><span class="avoir-conj">tu as</span></div>
+              <div class="avoir-row"><span class="avoir-pronoun">Il</span><span class="avoir-conj">il a</span></div>
+              <div class="avoir-row"><span class="avoir-pronoun">Elle</span><span class="avoir-conj">elle a</span></div>
+              <div class="avoir-row"><span class="avoir-pronoun">On</span><span class="avoir-conj">on a</span></div>
+              <div class="avoir-row"><span class="avoir-pronoun">&#199;a</span><span class="avoir-conj">&#231;a a</span></div>
+            </div>
+            <div class="avoir-secondary">
+              <div class="avoir-sec-row"><span class="avoir-sec-pronoun">Nous</span><span class="avoir-sec-conj">nous avons</span></div>
+              <div class="avoir-sec-row"><span class="avoir-sec-pronoun">Vous</span><span class="avoir-sec-conj">vous avez</span></div>
+              <div class="avoir-sec-row"><span class="avoir-sec-pronoun">Ils</span><span class="avoir-sec-conj">ils ont</span></div>
+              <div class="avoir-sec-row"><span class="avoir-sec-pronoun">Elles</span><span class="avoir-sec-conj">elles ont</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pp-card">
+          <div class="pp-title">&#128161; Participe Passé &#8212; 3 terminaisons + 1 exception</div>
+          <div class="pp-rows">
+            <div class="pp-row"><span class="pp-ending" style="color:#1D4ED8;">-é</span><span class="pp-label">verbes en -ER</span><span class="pp-examples">mang<strong>é</strong>, visit<strong>é</strong>, parl<strong>é</strong>, achet<strong>é</strong></span></div>
+            <div class="pp-row"><span class="pp-ending" style="color:#16A34A;">-i</span><span class="pp-label">verbes en -IR</span><span class="pp-examples">cho<strong>i</strong>si, fin<strong>i</strong>, part<strong>i</strong></span></div>
+            <div class="pp-row"><span class="pp-ending" style="color:#EA580C;">-u</span><span class="pp-label">verbes en -RE</span><span class="pp-examples">b<strong>u</strong>, v<strong>u</strong>, ten<strong>u</strong></span></div>
+            <div class="pp-row" style="background:rgba(196,146,42,.1);"><span class="pp-ending" style="color:var(--gold);font-size:14px;">fait</span><span class="pp-label">exception !</span><span class="pp-examples">j&#39;ai <strong>fait</strong> (to do / make)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pc-right">
+        <div class="exceptions-card">
+          <div class="exc-title">&#9888; 3 exceptions importantes</div>
+          <div class="exc-item">
+            <span class="exc-tag">ÊTRE</span>
+            <div class="exc-content">
+              <div class="exc-verb">j&#39;étais&hellip; c&#39;était&hellip;</div>
+              <div class="exc-example">C&#39;était magnifique ! / J&#39;étais à Paris.</div>
+              <div class="exc-en">It was magnificent! / I was in Paris.</div>
+            </div>
+          </div>
+          <div class="exc-item">
+            <span class="exc-tag">AVOIR</span>
+            <div class="exc-content">
+              <div class="exc-verb">j&#39;avais&hellip; on avait&hellip;</div>
+              <div class="exc-example">J&#39;avais une réservation. / On avait le temps.</div>
+              <div class="exc-en">I had a reservation. / We had time.</div>
+            </div>
+          </div>
+          <div class="exc-item">
+            <span class="exc-tag">ALLER</span>
+            <div class="exc-content">
+              <div class="exc-verb">je suis allée&hellip;</div>
+              <div class="exc-example">Je suis allée à Montmartre !</div>
+              <div class="exc-en">I went to Montmartre!</div>
+            </div>
+          </div>
+          <div style="background:#FEF9C3;border-radius:9px;padding:8px 12px;margin-top:8px;font-size:12px;color:#854D0E;">&#128161; <strong>Pas d&#39;autres exceptions pour l&#39;instant !</strong> Ces 3 suffisent.</div>
+        </div>
+        <div class="english-times-card">
+          <div class="et-title">&#127468;&#127463; En anglais, 1 form&#233; = 4 temps !</div>
+          <div class="et-intro">Le passé composé couvre TOUS les passés anglais :</div>
+          <div class="et-examples">
+            <div class="et-row"><span class="et-en">I visited</span><span class="et-arrow">&#8594;</span><span class="et-fr">j&#39;ai visit&#233;</span></div>
+            <div class="et-row"><span class="et-en">I have visited</span><span class="et-arrow">&#8594;</span><span class="et-fr">j&#39;ai visit&#233;</span></div>
+            <div class="et-row"><span class="et-en">I was visiting</span><span class="et-arrow">&#8594;</span><span class="et-fr">j&#39;ai visit&#233;</span></div>
+            <div class="et-row"><span class="et-en">I had visited</span><span class="et-arrow">&#8594;</span><span class="et-fr">j&#39;ai visit&#233;</span></div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:8px;font-style:italic;">En français, une seule forme suffit !</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(1)">&#8592; Retour</button><div class="progress-dots" id="dots3"></div><button class="nav-btn" onclick="goTo(3)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S4 VERBES -->
+<div class="slide" id="s4">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#128172;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt4"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Ton passé composé oral &bull; 10 minutes</div>
+    <div class="slide-title">Qu&#39;est-ce que <em>tu as fait ?</em></div>
+    <div class="slide-subtitle">Clique sur un verbe &#8212; vois l&#39;exemple &#8212; puis parle librement ! <span style="font-size:13px;color:#9CA3AF">(Click, see example, speak freely!)</span></div>
+    <div class="verbes-grid" id="verbes-grid"></div>
+    <div class="verbe-panel" id="verbe-panel"></div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(2)">&#8592; Retour</button><div class="progress-dots" id="dots4"></div><button class="nav-btn" onclick="goTo(4)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S5 EMOTIONS -->
+<div class="slide" id="s5">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#128525;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt5"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Tes émotions &bull; 5 minutes</div>
+    <div class="slide-title">C&#39;était <em>comment ?</em></div>
+    <div class="slide-subtitle">Tu vois l&#39;anglais &#8212; clique pour révéler le français + un exemple ! <span style="font-size:13px;color:#9CA3AF">(English first &#8212; click to flip to French!)</span></div>
+    <div class="emotions-grid" id="emotions-grid"></div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(3)">&#8592; Retour</button><div class="progress-dots" id="dots5"></div><button class="nav-btn" onclick="goTo(5)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S6 JEU DE ROLE -->
+<div class="slide" id="s6">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#127914;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt6"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Ton jeu de rôle &bull; 8 minutes</div>
+    <div class="slide-title">Retour de <em>voyage</em></div>
+    <div class="slide-subtitle">Fabrice = ton ami français curieux. Il pose des questions &#8212; toi tu racontes ! <span style="font-size:13px;color:#9CA3AF">(Fabrice asks, you answer freely!)</span></div>
+    <div class="roleplay-layout">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;">&#128172; Questions de Fabrice</div>
+        <div class="roleplay-questions" id="roleplay-questions"></div>
+      </div>
+      <div class="roleplay-aide">
+        <div class="aide-title">&#128273; Tes phrases-clés</div>
+        <div class="aide-section">
+          <div class="aide-section-title">Passé composé</div>
+          <div class="aide-item"><strong>J&#39;ai visit&#233;</strong> <span>I visited</span></div>
+          <div class="aide-item"><strong>J&#39;ai mang&#233;</strong> <span>I ate</span></div>
+          <div class="aide-item"><strong>J&#39;ai bu</strong> <span>I drank</span></div>
+          <div class="aide-item"><strong>J&#39;ai ador&#233;</strong> <span>I loved</span></div>
+          <div class="aide-item"><strong>J&#39;ai rencontr&#233;</strong> <span>I met</span></div>
+          <div class="aide-item"><strong>J&#39;ai pas aim&#233;</strong> <span>I didn&#39;t like</span></div>
+          <div class="aide-item"><strong>Je suis all&#233;e</strong> <span>I went</span></div>
+        </div>
+        <div class="aide-section">
+          <div class="aide-section-title">C&#39;était comment ?</div>
+          <div class="aide-item"><strong>C&#39;&#233;tait magnifique</strong> <span>It was magnificent</span></div>
+          <div class="aide-item"><strong>C&#39;&#233;tait incroyable</strong> <span>It was incredible</span></div>
+          <div class="aide-item"><strong>J&#39;ai eu un coup de c&#339;ur</strong> <span>I fell in love with it</span></div>
+          <div class="aide-item"><strong>J&#39;ai pas aim&#233;</strong> <span>I didn&#39;t like it</span></div>
+        </div>
+        <div class="roleplay-tip">&#128161; Focus sur la fluidit&#233; ! Un mot suffit parfois.</div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(4)">&#8592; Retour</button><div class="progress-dots" id="dots6"></div><button class="nav-btn" onclick="goTo(6)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S7 ARTICLES -->
+<div class="slide" id="s7">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#128218;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt7"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Ta grammaire &bull; 8 minutes</div>
+    <div class="slide-title">Les <em>5 articles</em></div>
+    <div class="slide-subtitle">Clique sur chaque carte pour d&#233;couvrir la r&#232;gle ! <span style="font-size:13px;color:#9CA3AF">(Click each card to discover the rule!)</span></div>
+    <div class="articles-intro">
+      <div class="articles-intro-title">Comment construire une phrase fran&#231;aise ?</div>
+      <div class="articles-intro-sub">Sujet + Verbe + <strong style="color:#FDE68A;">Article + Nom</strong> &#8212; c&#39;est la base de tout !</div>
+    </div>
+    <div class="articles-museum" id="articles-museum"></div>
+    <div class="art6-section">
+      <div class="art6-title">&#127381; Le 6&#232;me article &#8212; option bonus</div>
+      <div class="art6-grid">
+        <div class="art6-col">
+          <div class="art6-word">du</div>
+          <div class="art6-type">Masculin &bull; Singulier</div>
+          <div class="art6-ex"><strong>Je bois du</strong> vin <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>Je mange du</strong> pain <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>Il a du</strong> courage <em>(idea)</em></div>
+        </div>
+        <div class="art6-col">
+          <div class="art6-word">de la</div>
+          <div class="art6-type">F&#233;minin &bull; Singulier</div>
+          <div class="art6-ex"><strong>Je mange de la</strong> soupe <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>J&#39;&#233;coute de la</strong> musique <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>J&#39;ai de la</strong> chance <em>(idea)</em></div>
+        </div>
+        <div class="art6-col">
+          <div class="art6-word">des</div>
+          <div class="art6-type">Pluriel &bull; Non pr&#233;cis</div>
+          <div class="art6-ex"><strong>Je mange des</strong> fruits <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>Il y a des</strong> nuages <em>(I can&#39;t count)</em></div>
+          <div class="art6-ex"><strong>J&#39;ai des</strong> id&#233;es <em>(idea)</em></div>
+        </div>
+      </div>
+      <div class="art6-rule">&#128161; Quand tu peux pas compter ou c&#39;est une id&#233;e = du / de la / des</div>
+    </div>
+    <div class="tip-bar">
+      <div class="tip-item">Un / Une &#8594; pluriel : <span>DES</span></div>
+      <div class="tip-sep"></div>
+      <div class="tip-item">Du / De la &#8594; pluriel : <span>DES</span></div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(5)">&#8592; Retour</button><div class="progress-dots" id="dots7"></div><button class="nav-btn" onclick="goTo(7)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S8 TU LE SAVAIS -->
+<div class="slide" id="s8">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#10022;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt8"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Ta culture française</div>
+    <div class="slide-title">Tu le <em>savais ?</em></div>
+    <div class="slide-subtitle">Les Français et l&#39;honnêteté sur la France !</div>
+    <div class="tls-card">
+      <div class="tls-label">&#127467;&#127479; Tu le savais ?</div>
+      <div class="tls-title">"J&#39;ai adoré Paris mais les Parisiens étaient un peu froids&hellip;"</div>
+      <div class="tls-body">Les Français aiment que les étrangers aiment la France &#8212; mais ils adorent <strong style="color:#fff;">encore plus</strong> quand ils sont honnêtes ! Dire "J&#39;ai adoré Paris mais j&#39;ai trouvé les Parisiens un peu froids&hellip;" lancera une conversation <strong style="color:#fff;">passionnante</strong>. C&#39;est un sujet national !</div>
+    </div>
+    <div class="code-grid">
+      <div class="code-card"><div class="code-icon">&#128172;</div><div class="code-title">Parler des Parisiens</div><div class="code-text">Sujet de débat national garanti ! Tous les Français ont une opinion. C&#39;est une excellente façon de <strong>lancer une vraie conversation</strong>.</div></div>
+      <div class="code-card"><div class="code-icon">&#127477;&#127462;</div><div class="code-title">Paris vs la province</div><div class="code-text">Les Français hors de Paris sont souvent <strong>bien plus chaleureux</strong>. En Bourgogne, dans le Bordelais &#8212; les vignerons adorent parler de leur vin !</div></div>
+      <div class="code-card"><div class="code-icon">&#129381;</div><div class="code-title">Le coup de c&#339;ur</div><div class="code-text">"J&#39;ai eu un coup de c&#339;ur pour..." est très français. Tu <strong>parles comme les Français</strong> &#8212; ils adorent !</div></div>
+      <div class="code-card"><div class="code-icon">&#127870;</div><div class="code-title">La gastronomie</div><div class="code-text">Parler avec passion de ce que tu as mangé et bu = <strong>connexion immédiate</strong> avec n&#39;importe quel Français !</div></div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(6)">&#8592; Retour</button><div class="progress-dots" id="dots8"></div><button class="nav-btn" onclick="goTo(8)">Suivant &#8594;</button></div>
+</div>
+
+<!-- S9 FINAL -->
+<div class="slide" id="s9">
+  <div class="topbar"><div class="topbar-logo"><div class="logo-mark">&#10022;</div><div><div class="logo-text">Kingcretot Experience</div><div class="logo-sub">Français avec Fabrice</div></div></div><div><div class="session-badge">Session 12</div><div class="date-text" id="dt9"></div></div></div>
+  <div class="content">
+    <div class="slide-eyebrow">Fin de ta session</div>
+    <div class="slide-title">Ta chanson &amp; <em>ta semaine</em></div>
+    <div class="slide-subtitle">Parler français, c&#39;est magique !</div>
+    <div class="final-grid">
+      <div class="song-card">
+        <div class="song-label">&#127925; Ta chanson de la semaine</div>
+        <div class="song-name">Comptine d&#39;un autre été</div>
+        <div class="song-artist">Yann Tiersen &#8212; OST Amélie Poulain</div>
+        <div class="song-why">Voyage, mélancolie douce, souvenirs&hellip; cette musique est parfaite pour raconter et se souvenir de ton séjour en France. Ferme les yeux et laisse les images revenir !</div>
+        <a class="song-link" href="https://www.youtube.com/results?search_query=Yann+Tiersen+Comptine+autre+ete" target="_blank">&#9654; Écouter sur YouTube</a>
+      </div>
+      <div class="challenge-card">
+        <div class="challenge-label">&#127919; Ta semaine en français</div>
+        <div class="challenge-title">Raconte ton voyage &#8212; dans ta tête !</div>
+        <ul class="ch-items">
+          <li><div class="ch-dot">1</div><div>Relis les articles &#8212; 5 minutes pour ancrer un/une/des, le/la/les<br><span style="font-size:11px;color:#9CA3AF;">Re-read the articles &#8212; just 5 min!</span></div></li>
+          <li><div class="ch-dot">2</div><div>Pense à un souvenir de ton voyage et forme 3 phrases au passé dans ta tête<br><span style="font-size:11px;color:#9CA3AF;">Think of a travel memory and form 3 sentences!</span></div></li>
+          <li><div class="ch-dot">3</div><div>Si tu croises un client français &#8212; raconte-lui une chose que tu as aimée en France !<br><span style="font-size:11px;color:#9CA3AF;">See a French client? Tell them one thing you loved!</span></div></li>
+        </ul>
+      </div>
+      <div class="bravo-bar"><div class="bravo-icon">&#127775;</div><div class="bravo-text"><strong>Bravo Jasmine !</strong><br>Tu peux maintenant raconter ton voyage en français. C&#39;est une vraie compétence !</div></div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="nav-btn" onclick="goTo(7)">&#8592; Retour</button><div class="progress-dots" id="dots9"></div><button class="nav-btn" disabled>Fin &#10003;</button></div>
+</div>
+
+</div>
+<script>
+// DATE
+var jours=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+var mois=["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"];
+var now=new Date();
+var ds=jours[now.getDay()]+" "+now.getDate()+" "+mois[now.getMonth()]+" "+now.getFullYear();
+for(var i=1;i<=9;i++){var dte=document.getElementById("dt"+i);if(dte)dte.textContent=ds;}
+
+// SLIDES
+var TOTAL=9; var cur=0;
+function goTo(idx){
+  var ss=document.querySelectorAll(".slide");
+  ss[cur].classList.remove("active");ss[cur].classList.add("out");
+  var old=cur;
+  setTimeout(function(){ss[old].classList.remove("out");},420);
+  cur=idx;ss[cur].classList.add("active");renderDots();
+}
+function renderDots(){
+  for(var s=1;s<=TOTAL;s++){
+    var c=document.getElementById("dots"+s);if(!c)continue;c.innerHTML="";
+    for(var i=0;i<TOTAL;i++){
+      var d=document.createElement("div");
+      d.className="dot"+(i===cur?" active":(i<cur?" done":""));
+      (function(ii){d.onclick=function(){goTo(ii);};})(i);
+      c.appendChild(d);
+    }
+  }
+}
+renderDots();
+
+// HELPER: make element
+function el(tag,cls,txt){
+  var e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(txt!=null)e.textContent=txt;
+  return e;
+}
+function ap(parent,child){parent.appendChild(child);return child;}
+
+// VRAI/FAUX DATA
+var vfData=[
+  {fr:"L'addition vient automatiquement en France.",correct:false,expl:"Faux ! En France, l'addition ne vient JAMAIS automatiquement. Tu dois dire : L'addition, s'il vous plait !"},
+  {fr:"Pour appeler le serveur, on claque des doigts.",correct:false,expl:"Faux ! Jamais ! On dit Excusez-moi ou on leve juste la main discretement."},
+  {fr:"Le pain est gratuit dans la plupart des restos francais.",correct:true,expl:"Vrai ! Le pain est gratuit — et une carafe d'eau aussi."},
+  {fr:"Ca marche ! = Perfect! / OK!",correct:true,expl:"Vrai ! Ca marche est une expression tres utile au quotidien en France."},
+  {fr:"Je voudrais = I would like — plus poli que Je veux.",correct:true,expl:"Vrai ! Je voudrais est plus elegant. Toujours preferer ca dans un restaurant !"},
+  {fr:"C'est pas terrible = It's terrible!",correct:false,expl:"Faux ! C'est pas terrible = It's not great / nothing special. Pas aussi fort !"},
+];
+var vg=document.getElementById("vf-grid");
+vfData.forEach(function(item,i){
+  var card=el("div","vf-card");card.id="vfc"+i;
+  var q=ap(card,el("div","vf-question"));
+  var left=ap(q,el("div",""));
+  ap(left,el("div","vf-fr",item.fr));
+  var btns=ap(q,el("div","vf-btns"));
+  var bv=ap(btns,el("button","vf-btn vf-btn-v","Vrai ✅"));
+  var bf=ap(btns,el("button","vf-btn vf-btn-f","Faux ❌"));
+  var rev=ap(card,el("div","vf-reveal"));rev.id="vfr"+i;
+  (function(ii,bv2,bf2,rev2,card2){
+    bv2.onclick=function(){answerVF(ii,true,bv2,bf2,rev2,card2);};
+    bf2.onclick=function(){answerVF(ii,false,bv2,bf2,rev2,card2);};
+  })(i,bv,bf,rev,card);
+  vg.appendChild(card);
+});
+function answerVF(i,ans,bv,bf,rev,card){
+  var item=vfData[i];var ok=(ans===item.correct);
+  card.classList.add(ok?"answered-correct":"answered-wrong");
+  var r1=ap(rev,el("div",ok?"vf-correct":"vf-wrong",ok?"Bravo !":"Pas tout a fait !"));
+  ap(rev,el("div","vf-expl",item.expl));
+  rev.classList.add("open");
+  bv.disabled=true;bf.disabled=true;
+  bv.style.opacity=".4";bf.style.opacity=".4";
+}
+
+// VERBES DATA
+var verbesData=[
+  {emoji:"🏆",inf:"Visiter",pp:"j'ai visité",en:"to visit / I visited",
+   ex:[{fr:"J'ai visité le Louvre — c'était incroyable !",en:"I visited the Louvre — it was incredible!"},
+       {fr:"J'ai visité un château en Bourgogne.",en:"I visited a castle in Burgundy."}],
+   tryit:"Toi ! Qu'est-ce que tu as visité en France ?"},
+  {emoji:"🍽️",inf:"Manger",pp:"j'ai mangé",en:"to eat / I ate",
+   ex:[{fr:"J'ai mangé une crème brûlée délicieuse !",en:"I ate a delicious creme brulee!"},
+       {fr:"J'ai mangé du fromage et du pain tous les jours.",en:"I ate cheese and bread every day."}],
+   tryit:"Toi ! Qu'est-ce que tu as mangé à Paris ?"},
+  {emoji:"🍷",inf:"Boire",pp:"j'ai bu",en:"to drink / I drank",
+   ex:[{fr:"J'ai bu un excellent Bordeaux au restaurant.",en:"I drank an excellent Bordeaux at the restaurant."},
+       {fr:"J'ai bu du café tous les matins en terrasse.",en:"I drank coffee every morning on a terrace."}],
+   tryit:"Toi ! Qu'est-ce que tu as bu en France ?"},
+  {emoji:"❤️",inf:"Adorer",pp:"j'ai adoré",en:"to love / I loved",
+   ex:[{fr:"J'ai adoré les marchés locaux !",en:"I loved the local markets!"},
+       {fr:"J'ai adoré l'ambiance des bistros parisiens.",en:"I loved the atmosphere of Parisian bistros."}],
+   tryit:"Toi ! Qu'est-ce que tu as adoré en France ?"},
+  {emoji:"👥",inf:"Rencontrer",pp:"j'ai rencontré",en:"to meet / I met",
+   ex:[{fr:"J'ai rencontré des vignerons passionnants en Bourgogne.",en:"I met fascinating winemakers in Burgundy."},
+       {fr:"J'ai rencontré des Français très sympas au marché.",en:"I met very friendly French people at the market."}],
+   tryit:"Toi ! Tu as rencontré des Français intéressants ?"},
+  {emoji:"📸",inf:"Voir",pp:"j'ai vu",en:"to see / I saw",
+   ex:[{fr:"J'ai vu la tour Eiffel de nuit — c'était magique !",en:"I saw the Eiffel Tower at night — it was magical!"},
+       {fr:"J'ai vu des tableaux incroyables au Musée d'Orsay.",en:"I saw incredible paintings at the Musée d'Orsay."}],
+   tryit:"Toi ! Qu'est-ce que tu as vu ?"},
+  {emoji:"😕",inf:"Ne pas aimer",pp:"j'ai pas aimé",en:"to not like / I didn't like",
+   ex:[{fr:"J'ai pas aimé les files d'attente au Louvre !",en:"I didn't like the queues at the Louvre!"},
+       {fr:"J'ai pas aimé le métro aux heures de pointe.",en:"I didn't like the metro during rush hour."}],
+   tryit:"Toi ! Il y a quelque chose que tu as pas aimé ?"},
+  {emoji:"🚗",inf:"Aller",pp:"je suis allée",en:"to go / I went",
+   ex:[{fr:"Je suis allée à Montmartre — c'était trop beau !",en:"I went to Montmartre — it was so beautiful!"},
+       {fr:"Je suis allée dans une cave à vin à Bordeaux.",en:"I went to a wine cellar in Bordeaux."}],
+   tryit:"Toi ! Où tu es allée en France ?"},
+  {emoji:"🌟",inf:"Découvrir",pp:"j'ai découvert",en:"to discover / I discovered",
+   ex:[{fr:"J'ai découvert le kir royal — j'adore !",en:"I discovered the kir royal — I love it!"},
+       {fr:"J'ai découvert un petit bistrot incroyable rue Mouffetard.",en:"I discovered an incredible little bistro."}],
+   tryit:"Toi ! Tu as découvert quelque chose de nouveau ?"},
+];
+var currentVerbe=-1;
+var vgg=document.getElementById("verbes-grid");
+verbesData.forEach(function(v,i){
+  var card=el("div","verbe-card");card.id="vc"+i;
+  ap(card,el("div","verbe-emoji",v.emoji));
+  ap(card,el("div","verbe-infinitif",v.inf));
+  ap(card,el("div","verbe-pp",v.pp));
+  ap(card,el("div","verbe-en",v.en));
+  (function(ii){card.onclick=function(){showVerbe(ii);};})(i);
+  vgg.appendChild(card);
+});
+function showVerbe(i){
+  var panel=document.getElementById("verbe-panel");
+  if(currentVerbe===i){
+    document.getElementById("vc"+i).classList.remove("active-verbe");
+    panel.classList.remove("open");currentVerbe=-1;return;
+  }
+  if(currentVerbe>=0)document.getElementById("vc"+currentVerbe).classList.remove("active-verbe");
+  currentVerbe=i;
+  document.getElementById("vc"+i).classList.add("active-verbe");
+  var v=verbesData[i];
+  panel.innerHTML="";
+  var hdr=ap(panel,el("div","vp-header"));
+  ap(hdr,el("div","vp-icon",v.emoji));
+  var hdrt=ap(hdr,el("div",""));
+  ap(hdrt,el("div","vp-title",v.inf+" → "+v.pp));
+  ap(hdrt,el("div","vp-subtitle",v.en));
+  var exs=ap(panel,el("div","vp-examples"));
+  v.ex.forEach(function(e){
+    var box=ap(exs,el("div","vp-ex"));
+    ap(box,el("div","vp-fr",e.fr));
+    ap(box,el("div","vp-en",e.en));
+  });
+  ap(panel,el("div","vp-try","🎤 "+v.tryit));
+  panel.classList.add("open");
+  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+// EMOTIONS — english first
+var emotionsData=[
+  {emoji:"✨",en:"It was magnificent!",fr:"C'était magnifique !",ex:"J'ai visité le Mont-Saint-Michel — c'était magnifique !"},
+  {emoji:"🤩",en:"It was incredible!",fr:"C'était incroyable !",ex:"La dégustation à Bordeaux — c'était vraiment incroyable !"},
+  {emoji:"😁",en:"It was so good / awesome!",fr:"C'était trop bien !",ex:"Le bistrot rue Mouffetard — c'était trop bien !"},
+  {emoji:"😐",en:"It wasn't great / nothing special.",fr:"C'était pas terrible.",ex:"Le vin de la maison — c'était pas terrible, honnêtement."},
+  {emoji:"😔",en:"It was disappointing.",fr:"C'était décevant.",ex:"Le Louvre — un peu décevant avec toute la foule."},
+  {emoji:"😲",en:"It was strange / unusual!",fr:"C'était étrange !",ex:"Les escargots — c'était étrange mais bon !"},
+  {emoji:"❤️",en:"I loved that!",fr:"J'ai adoré ça !",ex:"Les marchés du matin — j'ai adoré ça !"},
+  {emoji:"😞",en:"I didn't like it.",fr:"J'ai pas aimé.",ex:"L'andouillette — j'ai vraiment pas aimé !"},
+  {emoji:"💕",en:"I fell in love with...",fr:"Je suis tombée amoureuse de...",ex:"Je suis tombée amoureuse de Montmartre !"},
+  {emoji:"🎁",en:"I fell head over heels for...",fr:"J'ai eu un coup de coeur pour...",ex:"J'ai eu un coup de coeur pour un petit caviste rue de Buci !"},
+  {emoji:"🌙",en:"It was like a dream!",fr:"C'était comme dans un rêve !",ex:"La Seine au coucher du soleil — c'était comme dans un rêve !"},
+  {emoji:"👏",en:"It's worth it! (present — reuse!)",fr:"Ça vaut le coup !",ex:"Visiter Bordeaux, ça vaut vraiment le coup !"},
+];
+var eg=document.getElementById("emotions-grid");
+emotionsData.forEach(function(item){
+  var card=el("div","emotion-card");
+  var front=ap(card,el("div","emotion-front"));
+  ap(front,el("div","em-emoji",item.emoji));
+  ap(front,el("div","em-en-main",item.en));
+  ap(front,el("div","em-hint","Clique pour le français !"));
+  var back=ap(card,el("div","emotion-back"));
+  ap(back,el("div","em-fr-back",item.fr));
+  ap(back,el("div","em-en-small",item.en));
+  ap(back,el("div","em-exemple",item.ex));
+  card.onclick=function(){this.classList.toggle("flipped");};
+  eg.appendChild(card);
+});
+
+// JEU DE ROLE
+var questions=[
+  {q:"T'as aimé Paris ?",en:"Did you like Paris?",note:"Question ouverte — raconte tout !"},
+  {q:"T'as mangé quoi ?",en:"What did you eat?",note:"Parle de tes plats préférés !"},
+  {q:"T'as bu quoi comme vin ?",en:"What wine did you drink?",note:"Parfait pour toi — parle comme une sommelière !"},
+  {q:"T'as visité quoi ?",en:"What did you visit?",note:"Un monument ? Un marché ? Une cave ?"},
+  {q:"C'était comment ?",en:"How was it? / What was it like?",note:"Utilise tes expressions : c'était magnifique, incroyable..."},
+  {q:"T'as rencontré des gens sympas ?",en:"Did you meet nice people?",note:"Raconte une anecdote !"},
+  {q:"T'as eu un coup de coeur pour quoi ?",en:"What did you fall in love with?",note:"Ta réponse préférée du voyage !"},
+];
+var avatarColors=["#1A3A5C","#7B2D3E","#2D6A4F","#C4922A","#6B3FA0","#0D7A6E","#3D5A8A"];
+var rq=document.getElementById("roleplay-questions");
+questions.forEach(function(q,i){
+  var card=el("div","rq-card");
+  var av=ap(card,el("div","rq-avatar",""));
+  av.style.background=avatarColors[i%avatarColors.length];
+  av.textContent="👤";
+  var body=ap(card,el("div",""));
+  ap(body,el("div","rq-label","Fabrice"));
+  ap(body,el("div","rq-fr",q.q));
+  ap(body,el("div","rq-en",q.en));
+  ap(body,el("div","rq-note",q.note));
+  rq.appendChild(card);
+});
+
+// ARTICLES
+var articlesData=[
+  {cls:"art-1",main:"un / une / des",en:"A / AN / SOME",
+   rule:"Article indéfini — chose non spécifique",
+   examples:[{fr:"J'ai un verre de vin",en:"I have a glass of wine"},
+             {fr:"C'est une bouteille de Bordeaux",en:"It's a bottle of Bordeaux"},
+             {fr:"Je voudrais des escargots",en:"I'd like some snails"}]},
+  {cls:"art-2",main:"le / la / les",en:"THE",
+   rule:"Article défini — chose spécifique ou générale",
+   examples:[{fr:"J'adore le vin français",en:"I love French wine (in general)"},
+             {fr:"La tour Eiffel est magnifique",en:"The Eiffel Tower is magnificent"},
+             {fr:"Les Parisiens sont intéressants",en:"The Parisians are interesting"}]},
+  {cls:"art-3",main:"ce / cette / ces",en:"THIS / THESE",
+   rule:"Démonstratif — pointer quelque chose de précis",
+   examples:[{fr:"Ce vin est trop bon !",en:"This wine is so good!"},
+             {fr:"Cette bouteille est parfaite",en:"This bottle is perfect"},
+             {fr:"Ces fromages sont délicieux",en:"These cheeses are delicious"}]},
+  {cls:"art-4",main:"mon / ma / mes",en:"MY",
+   rule:"Possessif — ce qui t'appartient ou te concerne",
+   examples:[{fr:"Mon vin préféré est le Sancerre",en:"My favorite wine is Sancerre"},
+             {fr:"Ma visite préférée était Montmartre",en:"My favorite visit was Montmartre"},
+             {fr:"Mes clients adorent le Bordeaux",en:"My clients love Bordeaux"}]},
+  {cls:"art-5",main:"deux / trois / ...",en:"A NUMBER",
+   rule:"Nombre — quand tu peux compter exactement",
+   examples:[{fr:"Je voudrais deux verres de vin",en:"I'd like two glasses of wine"},
+             {fr:"J'ai visité trois châteaux",en:"I visited three castles"},
+             {fr:"Cinq jours à Paris !",en:"Five days in Paris!"}]},
+];
+var am=document.getElementById("articles-museum");
+var openArt=-1;
+articlesData.forEach(function(a,i){
+  var card=el("div","art-card "+a.cls);card.id="ac"+i;
+  var top=ap(card,el("div","art-card-top"));
+  ap(top,el("div","art-main",a.main));
+  ap(top,el("div","art-en",a.en));
+  var panel=ap(card,el("div","art-panel"));panel.id="ap"+i;
+  ap(panel,el("div","art-rule",a.rule));
+  var exs=ap(panel,el("div","art-examples"));
+  a.examples.forEach(function(e){
+    var row=ap(exs,el("div","art-ex"));
+    var strong=document.createElement("strong");
+    strong.textContent=e.fr;
+    row.appendChild(strong);
+    var sp=document.createElement("span");
+    sp.textContent=" — "+e.en;
+    row.appendChild(sp);
+  });
+  (function(ii){
+    card.onclick=function(){
+      if(openArt>=0&&openArt!==ii){
+        document.getElementById("ac"+openArt).classList.remove("open-art");
+        document.getElementById("ap"+openArt).classList.remove("open-panel");
+      }
+      var p=document.getElementById("ap"+ii);
+      var c=document.getElementById("ac"+ii);
+      if(openArt===ii){c.classList.remove("open-art");p.classList.remove("open-panel");openArt=-1;}
+      else{c.classList.add("open-art");p.classList.add("open-panel");openArt=ii;}
+    };
+  })(i);
+  am.appendChild(card);
+});
+</script>
+</body>
+</html>
